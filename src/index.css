@@ -1,0 +1,15 @@
+@import url("https://fonts.googleapis.com/css2?family=Playwrite+HU:wght@100..400&family=Savate:ital,wght@0,200..900;1,200..900&display=swap");
+@import "tailwindcss";
+
+.savante-font {
+  font-family: "Savate", sans-serif;
+}
+
+.gradient-text {
+  font-family: "Savate", sans-serif;
+  background: linear-gradient(90deg, #ff6ec4, #7873f5);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
