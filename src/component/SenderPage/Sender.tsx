@@ -1,3 +1,6 @@
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import Room from "../Room/Room";
+
 const Sender = () => {
   return (
     <div className="mx-auto h-screen w-11/12">
@@ -11,19 +14,40 @@ const Sender = () => {
         {/* Role Button */}
         <div className="flex flex-1 flex-col items-center rounded-lg p-4 gap-8 mt-10 w-full">
           <div className="w-1/3 flex flex-row gap-5 rounded-lg border-2 border-transparent  transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-red-500 justify-center items-center p-4 bg-cyan-600">
-            <button className="cursor-pointer p-2 text-2xl text-white font-medium">
-              Create Private Room
-            </button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className="cursor-pointer p-2 text-2xl text-white font-medium">
+                  Create Private Room
+                </button>
+              </DialogTrigger>
+              <DialogContent>
+                <Room roomType={"private"} />
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="w-1/3 flex flex-row gap-5 rounded-md border-2 border-transparent  transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-red-500 justify-center items-center p-4 bg-cyan-600">
-            <button className="cursor-pointer p-2 text-2xl text-white font-medium">
-              Create Public Room
-            </button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className="cursor-pointer p-2 text-2xl text-white font-medium">
+                  Create Public Room
+                </button>
+              </DialogTrigger>
+              <DialogContent>
+                <Room roomType={"public"} />
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="w-1/3 flex flex-row gap-5 rounded-md border-2 border-transparent  transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-red-500 justify-center items-center p-4 bg-cyan-600">
-            <button className="cursor-pointer p-2 text-2xl text-white font-medium">
-              Boardcast for limited time
-            </button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className="cursor-pointer p-2 text-2xl text-white font-medium">
+                  BoardCast for limited time
+                </button>
+              </DialogTrigger>
+              <DialogContent>
+                <Room roomType={"Boardcast"} />
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>

@@ -11,12 +11,12 @@ const router = createBrowserRouter([
   },
   {
     path: "/upload",
-    element: <UploadForm />, 
+    element: <UploadForm />,
   },
   {
     path: "/sender",
-    element: <Sender />
-  }
+    element: <Sender />,
+  },
 ]);
 
 export default router;
