@@ -27,7 +27,7 @@ const LandingPage = () => {
             </p>
             <button
               className="cursor-pointer border-2 rounded-full p-2 animate-bounce"
-              onClick={() => router("/upload")}
+              onClick={() => router("/sender")}
             >
               <SendIcon />
             </button>
