@@ -23,6 +23,10 @@ const Room = ({ roomType }: { roomType: string }) => {
   };
 
   const handleClick = () => {
+    if (!roomName.trim()) {
+      alert("Please enter a room name.");
+      return;
+    }
     generateRoomCode();
   };
 
