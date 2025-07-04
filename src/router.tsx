@@ -1,8 +1,8 @@
 import { createBrowserRouter } from "react-router";
 import App from "./App.tsx";
-//import LandingPage from "./component/LandingPage/LandingPage.tsx";
 import UploadForm from "./component/UploadForm.tsx";
 import Sender from "./component/SenderPage/Sender.tsx";
+import Reciever from "./component/RecieverPage/Reciever.tsx";
 
 const router = createBrowserRouter([
   {
@@ -16,6 +16,10 @@ const router = createBrowserRouter([
   {
     path: "/sender",
     element: <Sender />,
+  },
+  {
+    path: "/reciever",
+    element: <Reciever />,
   },
 ]);
 

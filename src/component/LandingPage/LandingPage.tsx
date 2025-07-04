@@ -36,7 +36,7 @@ const LandingPage = () => {
             <p className="text-xl tracking-wider leading-snug savante-font text-white">
               If you are receiver then Click here.
             </p>
-            <button className="cursor-pointer border-2 rounded-full p-2 animate-bounce">
+            <button className="cursor-pointer border-2 rounded-full p-2 animate-bounce" onClick={() => router("/reciever")}>
               <HandCoins />
             </button>
           </div>

@@ -147,3 +147,23 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-blink1 {
+  animation: blink 1s infinite ease-in-out;
+}
+.animate-blink2 {
+  animation: blink 1s infinite ease-in-out 0.2s;
+}
+.animate-blink3 {
+  animation: blink 1s infinite ease-in-out 0.4s;
+}

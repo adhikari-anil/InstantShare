@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { Upload, File, X, Check } from "lucide-react";
 
-const DragandDrop = () => {
+const DragandDrop = ({ roomCode }: { roomCode: string }) => {
   const [files, setFiles] = useState<File[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<
@@ -80,7 +80,8 @@ const DragandDrop = () => {
 
   return (
     <div className="mx-auto p-6 bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="mb-8">
+      <div className="mb-8 flex flex-col gap-4">
+        <h1>Room Code: {roomCode}</h1>
         <h1 className="text-3xl font-bold text-gray-800 mb-2">File Upload</h1>
         <p className="text-gray-600">
           Drag and drop your files or click to browse

@@ -5,10 +5,13 @@ import {
 } from "@/components/ui/dialog";
 import { Copy } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router";
 
 const Room = ({ roomType }: { roomType: string }) => {
   const [roomName, setRoomName] = useState<string>("");
   const [roomCode, setRoomCode] = useState<string>("");
+
+  const router = useNavigate();
 
   const generateRoomCode = () => {
     const id =
@@ -16,6 +19,7 @@ const Room = ({ roomType }: { roomType: string }) => {
       "-" +
       Math.random().toString(36).substring(2, 8);
     setRoomCode(id);
+    router("/upload", { state: { roomCode: id } });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
