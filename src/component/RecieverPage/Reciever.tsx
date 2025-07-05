@@ -17,10 +17,15 @@ const Socket = io("http://localhost:4000", {
 
 const Reciever = () => {
   const [room, setRoom] = useState<string>("");
+  const [username, setUsername] = useState<string>("");
   const [senderDisconnected, setSenderDisconnected] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setRoom(e.target.value);
+  };
+
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUsername(e.target.value);
   };
 
   const handleClick = () => {
@@ -31,7 +36,7 @@ const Reciever = () => {
     // Here you would typically emit a socket event to join the room
     console.log(`Joining room: ${room}`);
 
-    Socket.emit("joinAsReceiver", room);
+    Socket.emit("joinAsReceiver", { room, username });
   };
 
   useEffect(() => {
@@ -62,6 +67,15 @@ const Reciever = () => {
       <div className="flex flex-col gap-4">
         <div></div>
         <div className="flex flex-col gap-4">
+          <label htmlFor="roomId" className="text-lg font-semibold">
+            Username
+          </label>
+          <input
+            type="text"
+            id="username"
+            className="border p-4 rounded-md text-lg font-semibold"
+            onChange={handleUsernameChange}
+          />
           <label htmlFor="roomId" className="text-lg font-semibold">
             Room ID:
           </label>

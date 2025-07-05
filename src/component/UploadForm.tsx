@@ -12,6 +12,7 @@ const Socket = io("http://localhost:4000", {
 const UploadForm = () => {
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState("");
 
   const location = useLocation();
   const roomCode = location.state?.roomCode;
@@ -31,6 +32,7 @@ const UploadForm = () => {
 
     Socket.on("receiver-joined", (data) => {
       console.log("Receiver joined the room:", data);
+      setUserName(data.username);
       setConnected(true);
       setLoading(false);
     });
@@ -62,7 +64,7 @@ const UploadForm = () => {
         </div>
       ) : connected ? (
         <div className="text-2xl font-semibold text-green-700">
-          Receiver has joined the room!
+          {userName} has joined the room!
           <DragandDrop roomCode={roomCode} />
         </div>
       ) : (
