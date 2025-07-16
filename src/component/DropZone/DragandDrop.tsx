@@ -1,19 +1,23 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Upload, File, X, Check } from "lucide-react";
+import peer from "@/services/peer";
+import { useSocket } from "@/context/socketContext";
 
-const DragandDrop = ({ roomCode }: { roomCode: string }) => {
-  const [files, setFiles] = useState<File[]>([]);
+const DragandDrop = ({ roomCode, socketId }: { roomCode: string, socketId: string }) => {
+  const [file, setFile] = useState<File | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<
     "idle" | "uploading" | "success"
   >("idle");
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  const socket = useSocket();
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragActive(false);
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    setFiles((prev) => [...prev, ...droppedFiles]);
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) setFile(droppedFile);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -34,29 +38,25 @@ const DragandDrop = ({ roomCode }: { roomCode: string }) => {
     inputRef.current?.click();
   };
 
-  const handleUploadClick = () => {
-    if (files.length === 0) {
+  const handleUploadClick = async () => {
+    if (!file) {
       alert("Please select files to upload.");
       return;
     }
-    simulateUpload();
+    setUploadStatus("uploading");
+    const offer = await peer.getOffer();
+    console.log("offer created: ",offer);
+    console.log("receiver ko tah: ",socketId);
+    socket.emit("offer", { to: socketId, offer });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = e.target.files ? Array.from(e.target.files) : [];
-    setFiles((prev) => [...prev, ...selectedFiles]);
+    const selectedFiles = e.target.files?.[0] ?? null;
+    setFile(selectedFiles);
   };
 
-  const removeFile = (indexToRemove: number) => {
-    setFiles(files.filter((_, index) => index !== indexToRemove));
-  };
-
-  const simulateUpload = () => {
-    setUploadStatus("uploading");
-    setTimeout(() => {
-      setUploadStatus("success");
-      setTimeout(() => setUploadStatus("idle"), 2000);
-    }, 1500);
+  const removeFile = () => {
+    setFile(null);
   };
 
   const formatFileSize = (bytes: number) => {
@@ -78,6 +78,23 @@ const DragandDrop = ({ roomCode }: { roomCode: string }) => {
     return "📁";
   };
 
+  useEffect(() => {
+    if (!socket) return;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleIncommingAnswer = async ({ from, answer }: any) => {
+      console.log("Answer received from: ", from);
+      await peer.setRemoteDescription(answer);
+      setUploadStatus("success");
+    };
+
+    socket.on("incomming-answer", handleIncommingAnswer);
+
+    return () => {
+      socket.off("incomming-answer", handleIncommingAnswer);
+    };
+  }, [socket]);
+
   return (
     <div className="mx-auto p-6 bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="mb-8 flex flex-col gap-4">
@@ -94,7 +111,7 @@ const DragandDrop = ({ roomCode }: { roomCode: string }) => {
           ${
             isDragActive
               ? "border-blue-500 bg-blue-100 shadow-lg scale-[1.02]"
-              : files.length > 0
+              : file
               ? "border-green-400 bg-green-50 hover:bg-green-100"
               : "border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50"
           }
@@ -133,26 +150,14 @@ const DragandDrop = ({ roomCode }: { roomCode: string }) => {
                 />
               </div>
 
-              {files.length === 0 ? (
-                <div>
-                  <p className="text-lg font-medium text-gray-700 mb-2">
-                    {isDragActive
-                      ? "Drop files here"
-                      : "Choose files or drag them here"}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Support for multiple file types
-                  </p>
-                </div>
+              {file ? (
+                <p className="text-lg font-medium text-green-700">
+                  File ready to upload
+                </p>
               ) : (
-                <div>
-                  <p className="text-lg font-medium text-green-700 mb-2">
-                    {files.length} file{files.length !== 1 ? "s" : ""} selected
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Click to add more files
-                  </p>
-                </div>
+                <p className="text-lg font-medium text-gray-700">
+                  {isDragActive ? "Drop file here" : "Choose or drag a file"}
+                </p>
               )}
             </>
           )}
@@ -175,57 +180,45 @@ const DragandDrop = ({ roomCode }: { roomCode: string }) => {
         )}
       </div>
 
-      {files.length > 0 && (
+      {file && (
         <div className="mt-8">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
             <File className="w-5 h-5 mr-2" />
-            Selected Files ({files.length})
+            Selected Files
           </h3>
 
-          <div className="space-y-3">
-            {files.map((file, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200"
-              >
-                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <div className="text-2xl">{getFileIcon(file.name)}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {file.name}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {formatFileSize(file.size)}
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeFile(idx);
-                  }}
-                  className="ml-4 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors duration-200"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+          <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div className="flex items-center space-x-3 flex-1 min-w-0">
+              <div className="text-2xl">{getFileIcon(file.name)}</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {file.name}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {formatFileSize(file.size)}
+                </p>
               </div>
-            ))}
-          </div>
+            </div>
 
-          <div className="mt-6 flex justify-center">
             <button
-              onClick={() => setFiles([])}
-              className="px-6 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors duration-200 font-medium"
+              onClick={(e) => {
+                e.stopPropagation();
+                removeFile();
+              }}
+              className="ml-4 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors duration-200"
             >
-              Clear All Files
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
       )}
+
       <div className="mt-8 flex justify-center items-center">
         <button
-          onClick={handleUploadClick}
+          onClick={() => {
+            handleUploadClick();
+            console.log("Upload button clicked");
+          }}
           className="mt-6 px-6 py-2 text-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
         >
           Upload Files
