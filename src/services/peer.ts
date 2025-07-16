@@ -1,5 +1,7 @@
 class PeerService {
-  private _peer?: RTCPeerConnection;
+  public _peer?: RTCPeerConnection;
+  public dataChannel?: RTCDataChannel | null = null;
+  public onDataChannel?: ((channel: RTCDataChannel) => void) | null = null;
 
   constructor() {
     if (!this._peer) {
@@ -10,6 +12,33 @@ class PeerService {
           },
         ],
       });
+    }
+
+    //For receiver-side data channel
+    this._peer.ondatachannel = (event) => {
+      this.dataChannel = event.channel;
+      if(this.onDataChannel){
+        this.onDataChannel(event.channel);
+      }
+    };
+  }
+
+  public onIceCandidate(callback: (candidate: RTCIceCandidate) => void) {
+    if (this._peer) {
+      this._peer.onicecandidate = (e) => {
+        if (e.candidate) {
+          callback(e.candidate);
+        }
+      };
+    }
+  }
+
+  public async addIceCandidate(candidate: RTCIceCandidate) {
+    try {
+      await this._peer?.addIceCandidate(candidate);
+      console.log("Successfully added ICE candidate..");
+    } catch (error) {
+      console.log("Error Adding ICE candidate: ", error);
     }
   }
 

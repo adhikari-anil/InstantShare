@@ -3,7 +3,13 @@ import { Upload, File, X, Check } from "lucide-react";
 import peer from "@/services/peer";
 import { useSocket } from "@/context/socketContext";
 
-const DragandDrop = ({ roomCode, socketId }: { roomCode: string, socketId: string }) => {
+const DragandDrop = ({
+  roomCode,
+  socketId,
+}: {
+  roomCode: string;
+  socketId: string;
+}) => {
   const [file, setFile] = useState<File | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<
@@ -44,9 +50,27 @@ const DragandDrop = ({ roomCode, socketId }: { roomCode: string, socketId: strin
       return;
     }
     setUploadStatus("uploading");
+
+    //create data channel
+    const dataChannel = peer._peer?.createDataChannel("message");
+
+    // set up data channel handlers
+    if (dataChannel) {
+      dataChannel.onopen = () => {
+        console.log("Data channel opened! ");
+        dataChannel.send("Hello there!");
+      };
+
+      dataChannel.onerror = (error) => {
+        console.log("Data channel error: ", error);
+      };
+
+      peer.dataChannel = dataChannel;
+    }
+
     const offer = await peer.getOffer();
-    console.log("offer created: ",offer);
-    console.log("receiver ko tah: ",socketId);
+    console.log("offer created: ", offer);
+    console.log("receiver ko tah: ", socketId);
     socket.emit("offer", { to: socketId, offer });
   };
 
@@ -88,12 +112,39 @@ const DragandDrop = ({ roomCode, socketId }: { roomCode: string, socketId: strin
       setUploadStatus("success");
     };
 
+    // Ice candidate handler...
+    const handleIceCandidate = async ({
+      candidate,
+    }: {
+      candidate: RTCIceCandidate;
+    }) => {
+      await peer.addIceCandidate(new RTCIceCandidate(candidate));
+    };
+
+    // Ice candidate gathering in sender's end..
+    peer.onIceCandidate((candidate) => {
+      socket.emit("ice-candidate", {
+        to: socketId,
+        candidate: candidate.toJSON(),
+      });
+    });
+
     socket.on("incomming-answer", handleIncommingAnswer);
+    socket.on("ice-candidate", handleIceCandidate);
 
     return () => {
       socket.off("incomming-answer", handleIncommingAnswer);
+      socket.off("ice-candidate", handleIceCandidate);
     };
-  }, [socket]);
+  }, [socket, socketId]);
+
+  useEffect(() => {
+    if (peer._peer) {
+      peer._peer.onconnectionstatechange = () => {
+        console.log("Connection state:", peer._peer?.connectionState);
+      };
+    }
+  }, []);
 
   return (
     <div className="mx-auto p-6 bg-gradient-to-br from-slate-50 to-blue-50">

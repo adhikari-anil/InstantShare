@@ -1,11 +1,23 @@
 import { useSocket } from "@/context/socketContext";
-import peerService from "@/services/peer";
-import { useEffect } from "react";
+import peer from "@/services/peer";
+import { useEffect, useState } from "react";
 
 const FileView = ({ room }: { room: string }) => {
+  const [senderId, setSenderId] = useState("");
   const socket = useSocket();
+  const [state, setState] = useState("disconnected");
 
   useEffect(() => {
+    // set up data channel handler
+    peer.onDataChannel = (channel) => {
+      channel.onmessage = (event) => {
+        console.log("Message Received: ", event.data);
+      };
+      channel.onopen = () => {
+        console.log("Data channel opened from receiver's side...");
+      };
+    };
+
     const handleIncommingOffer = async ({
       from,
       offer,
@@ -14,20 +26,55 @@ const FileView = ({ room }: { room: string }) => {
       offer: RTCSessionDescriptionInit;
     }) => {
       console.log("Receiver offer: ", offer);
-      const answer = await peerService.getAnswer(offer);
+      setSenderId(from);
+      const answer = await peer.getAnswer(offer);
       socket.emit("answer", { to: from, answer: answer });
     };
+
+    // ICE Candidate handler..
+    const handleIceCandidate = async ({
+      candidate,
+    }: {
+      candidate: RTCIceCandidate;
+    }) => {
+      await peer.addIceCandidate(new RTCIceCandidate(candidate));
+    };
+
+    //gathering ICE candidate in receiver's end...
+    peer.onIceCandidate((candidate) => {
+      if (senderId) {
+        socket.emit("ice-candidate", {
+          to: senderId,
+          candidate: candidate.toJSON(),
+        });
+      }
+    });
+
     console.log("Socket le listen garxa");
     socket.on("incomming-offer", handleIncommingOffer);
+    socket.on("ice-candidate", handleIceCandidate);
 
     return () => {
       socket.off("incomming-offer", handleIncommingOffer);
+      socket.off("ice-candidate", handleIceCandidate);
     };
-  }, [socket]);
+  }, [senderId, socket]);
+
+  useEffect(() => {
+    if (peer._peer) {
+      peer._peer.onconnectionstatechange = () => {
+        console.log("Connection state:", peer._peer?.connectionState);
+        setState(peer._peer?.connectionState ?? "disconnected");
+      };
+    }
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen w-screen gap-5">
-      <h1>Connected to Room: {room}</h1>
+      <h1>
+        Connected to Room: {room}{" "}
+        {state === "connected" ? "🟢" : "❌"}
+      </h1>
       <h1>FileView</h1>
       <div className="flex flex-col gap-4 h-full w-3/4">
         <div className="text-center">
