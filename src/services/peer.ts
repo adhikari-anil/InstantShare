@@ -2,6 +2,7 @@ class PeerService {
   public _peer?: RTCPeerConnection;
   public dataChannel?: RTCDataChannel | null = null;
   public onDataChannel?: ((channel: RTCDataChannel) => void) | null = null;
+  public isOfferCreated: boolean = false;
 
   constructor() {
     if (!this._peer) {
@@ -17,7 +18,7 @@ class PeerService {
     //For receiver-side data channel
     this._peer.ondatachannel = (event) => {
       this.dataChannel = event.channel;
-      if(this.onDataChannel){
+      if (this.onDataChannel) {
         this.onDataChannel(event.channel);
       }
     };
@@ -52,11 +53,14 @@ class PeerService {
   }
 
   async getOffer() {
-    if (this._peer) {
-      const offer = await this._peer.createOffer();
-      await this._peer.setLocalDescription(new RTCSessionDescription(offer));
-      return offer;
+    if (!this._peer) return;
+    if (this.isOfferCreated) {
+      console.warn("Offer is already created...");
+      return;
     }
+    const offer = await this._peer.createOffer();
+    await this._peer.setLocalDescription(new RTCSessionDescription(offer));
+    return offer;
   }
 
   async setRemoteDescription(ans: RTCSessionDescriptionInit) {

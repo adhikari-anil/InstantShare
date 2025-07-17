@@ -16,6 +16,7 @@ const DragandDrop = ({
     "idle" | "uploading" | "success"
   >("idle");
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const hasStarted = useRef(false);
 
   const socket = useSocket();
 
@@ -49,29 +50,8 @@ const DragandDrop = ({
       alert("Please select files to upload.");
       return;
     }
-    setUploadStatus("uploading");
-
-    //create data channel
-    const dataChannel = peer._peer?.createDataChannel("message");
-
-    // set up data channel handlers
-    if (dataChannel) {
-      dataChannel.onopen = () => {
-        console.log("Data channel opened! ");
-        dataChannel.send("Hello there!");
-      };
-
-      dataChannel.onerror = (error) => {
-        console.log("Data channel error: ", error);
-      };
-
-      peer.dataChannel = dataChannel;
-    }
-
-    const offer = await peer.getOffer();
-    console.log("offer created: ", offer);
-    console.log("receiver ko tah: ", socketId);
-    socket.emit("offer", { to: socketId, offer });
+    console.log("Upload Button clicked...");
+    setUploadStatus("success");
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,7 +89,7 @@ const DragandDrop = ({
     const handleIncommingAnswer = async ({ from, answer }: any) => {
       console.log("Answer received from: ", from);
       await peer.setRemoteDescription(answer);
-      setUploadStatus("success");
+      console.log("Connection almost completed...");
     };
 
     // Ice candidate handler...
@@ -136,6 +116,46 @@ const DragandDrop = ({
       socket.off("incomming-answer", handleIncommingAnswer);
       socket.off("ice-candidate", handleIceCandidate);
     };
+  }, [socket, socketId]);
+
+  useEffect(() => {
+    if (hasStarted.current) return;
+    hasStarted.current = true;
+    const handleConnection = async () => {
+      if (
+        peer._peer?.connectionState === "connected" ||
+        peer._peer?.signalingState === "have-local-offer"
+      ) {
+        console.log(
+          "Connection already in progress or established. Skipping offer creation."
+        );
+        return;
+      }
+      //create data channel
+      if (!peer.dataChannel) {
+        const dataChannel = peer._peer?.createDataChannel("message");
+
+        // set up data channel handlers
+        if (dataChannel) {
+          dataChannel.onopen = () => {
+            console.log("Data channel opened! ");
+            dataChannel.send("Hello there!");
+          };
+
+          dataChannel.onerror = (error) => {
+            console.log("Data channel error: ", error);
+          };
+
+          peer.dataChannel = dataChannel;
+        }
+      }
+
+      const offer = await peer.getOffer();
+      console.log("offer created: ", offer);
+      console.log("receiver ko tah: ", socketId);
+      socket.emit("offer", { to: socketId, offer });
+    };
+    handleConnection();
   }, [socket, socketId]);
 
   useEffect(() => {

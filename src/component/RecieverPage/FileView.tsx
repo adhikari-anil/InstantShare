@@ -72,8 +72,7 @@ const FileView = ({ room }: { room: string }) => {
   return (
     <div className="flex flex-col items-center justify-center h-screen w-screen gap-5">
       <h1>
-        Connected to Room: {room}{" "}
-        {state === "connected" ? "🟢" : "❌"}
+        Connected to Room: {room} {state === "connected" ? "🟢" : "❌"}
       </h1>
       <h1>FileView</h1>
       <div className="flex flex-col gap-4 h-full w-3/4">
