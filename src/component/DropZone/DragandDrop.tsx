@@ -51,7 +51,13 @@ const DragandDrop = ({
       return;
     }
     console.log("Upload Button clicked...");
-    setUploadStatus("success");
+    if (peer.dataChannel?.readyState === "open") {
+      peer.sendFile(file); // This will push data through the same channel
+      setUploadStatus("success");
+      setTimeout(()=>{
+        setUploadStatus("idle")
+      },2000);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,7 +145,6 @@ const DragandDrop = ({
         if (dataChannel) {
           dataChannel.onopen = () => {
             console.log("Data channel opened! ");
-            dataChannel.send("Hello there!");
           };
 
           dataChannel.onerror = (error) => {
