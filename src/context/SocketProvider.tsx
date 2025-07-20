@@ -4,6 +4,7 @@ import { SocketContext } from "./socketContext";
 import type { ReactNode } from "react";
 import type { Socket } from "socket.io-client";
 import type { DefaultEventsMap } from "@socket.io/component-emitter";
+const backend = import.meta.env.VITE_BACKEND_URL;
 
 interface SocketProviderProps {
   children: ReactNode;
@@ -11,7 +12,7 @@ interface SocketProviderProps {
 
 export const SocketProvider = ({ children }: SocketProviderProps) => {
   const socket = useMemo<Socket<DefaultEventsMap, DefaultEventsMap>>(
-    () => io("http://localhost:4000"),
+    () => io(backend),
     []
   );
 
