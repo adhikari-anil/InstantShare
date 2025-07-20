@@ -11,7 +11,7 @@ interface SocketProviderProps {
 
 export const SocketProvider = ({ children }: SocketProviderProps) => {
   const socket = useMemo<Socket<DefaultEventsMap, DefaultEventsMap>>(
-    () => io("http://localhost:4000"),
+    () => io("192.168.18.189:9000"),
     []
   );
 

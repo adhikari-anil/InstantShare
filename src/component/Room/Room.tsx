@@ -59,7 +59,7 @@ const Room = ({ roomType }: { roomType: string }) => {
 
   return (
     <DialogHeader className="flex flex-col gap-4">
-      <DialogTitle className="text-2xl font-bold">
+      <DialogTitle className="text-lg md:text-2xl font-bold">
         Create {roomType} Room: {id}
       </DialogTitle>
       <DialogDescription>
