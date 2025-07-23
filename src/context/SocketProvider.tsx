@@ -12,7 +12,10 @@ interface SocketProviderProps {
 
 export const SocketProvider = ({ children }: SocketProviderProps) => {
   const socket = useMemo<Socket<DefaultEventsMap, DefaultEventsMap>>(
-    () => io(backend),
+    () =>
+      io(backend, {
+        transports: ["websocket"],
+      }),
     []
   );
 

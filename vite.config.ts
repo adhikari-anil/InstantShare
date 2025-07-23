@@ -6,6 +6,11 @@ import path from "path"
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    proxy: {
+      "/socket.io": 'http://localhost:9000',
+    }
+  },
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
