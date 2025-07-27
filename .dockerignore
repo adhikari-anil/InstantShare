@@ -8,7 +8,7 @@ build
 
 # Local environment files
 .env
-.env.*
+.env.development
 !.env.production  # Uncomment if you WANT to copy this one during Docker build
 
 # Vite cache
