@@ -7,6 +7,7 @@ import { useSocket } from "@/context/socketContext";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import Loading from "../Loading/Loading";
+import toast from "react-hot-toast";
 
 const Room = ({ roomType }: { roomType: string }) => {
   const [roomName, setRoomName] = useState<string>("");
@@ -51,7 +52,7 @@ const Room = ({ roomType }: { roomType: string }) => {
 
   const handleClick = () => {
     if (!roomName.trim()) {
-      alert("Please enter a room name.");
+      toast.error("RoomName Missing..");
       return;
     }
     generateRoomCode();

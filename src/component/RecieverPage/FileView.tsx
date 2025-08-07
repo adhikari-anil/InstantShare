@@ -207,7 +207,7 @@ const FileView = ({ room }: { room: string }) => {
       ) : (
         <div className="flex flex-col gap-6">
           <h1>
-            Connected to Room: {room} {state === "connected" ? "🟢" : "❌"}
+            {state === "connected" ? `Connected to Room: ${room} 🟢` : `${room} room disconnected ❌`}
           </h1>
           <Loading />
         </div>

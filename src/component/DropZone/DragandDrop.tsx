@@ -2,13 +2,17 @@ import React, { useState, useRef, useEffect } from "react";
 import { Upload, File, X, Check } from "lucide-react";
 import peer from "@/services/peer";
 import { useSocket } from "@/context/socketContext";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router";
 
 const DragandDrop = ({
   roomCode,
   socketId,
+  username,
 }: {
   roomCode: string;
   socketId: string;
+  username: string;
 }) => {
   const [file, setFile] = useState<File | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
@@ -17,8 +21,10 @@ const DragandDrop = ({
   >("idle");
   const inputRef = useRef<HTMLInputElement | null>(null);
   const hasStarted = useRef(false);
+  const [state, setState] = useState("");
 
   const socket = useSocket();
+  const navigate = useNavigate();
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -54,9 +60,9 @@ const DragandDrop = ({
     if (peer.dataChannel?.readyState === "open") {
       peer.sendFile(file); // This will push data through the same channel
       setUploadStatus("success");
-      setTimeout(()=>{
-        setUploadStatus("idle")
-      },2000);
+      setTimeout(() => {
+        setUploadStatus("idle");
+      }, 2000);
     }
   };
 
@@ -167,14 +173,35 @@ const DragandDrop = ({
     if (peer._peer) {
       peer._peer.onconnectionstatechange = () => {
         console.log("Connection state:", peer._peer?.connectionState);
+        setState(peer._peer?.connectionState || "");
       };
     }
   }, []);
 
+    useEffect(() => {
+    if (state === "disconnected") {
+      toast.error("Receiver Disconnected...");
+    }
+    if (state === "failed") {
+      toast.error("Disposing the room...");
+      setTimeout(() => {
+        navigate("/");
+      }, 4000);
+    }
+  }, [state, navigate]);
+
   return (
     <div className="mx-auto p-6 bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="mb-8 flex flex-col gap-4">
-        <h1>Room Code: {roomCode}</h1>
+        {state === "disconnected" || state === "failed" ? (
+          <h1>
+            {username} has disconnected from room {roomCode}
+          </h1>
+        ) : (
+          <h1>
+            {username} has joined the room {roomCode}
+          </h1>
+        )}
         <h1 className="text-3xl font-bold text-gray-800 mb-2">File Upload</h1>
         <p className="text-gray-600">
           Drag and drop your files or click to browse
