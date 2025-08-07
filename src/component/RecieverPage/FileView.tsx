@@ -2,14 +2,17 @@ import { useSocket } from "@/context/socketContext";
 import peer from "@/services/peer";
 import { useEffect, useState } from "react";
 import Loading from "../Loading/Loading";
+import { useNavigate } from "react-router";
+import toast from "react-hot-toast";
 
 const FileView = ({ room }: { room: string }) => {
   const [senderId, setSenderId] = useState("");
   const socket = useSocket();
-  const [state, setState] = useState("disconnected");
+  const [state, setState] = useState("");
   const [downloadLink, setUrl] = useState<string>();
   const [fileName, setFileName] = useState<string>("");
   const [fileType, setFileType] = useState<string>("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     // set up data channel handler
@@ -125,17 +128,31 @@ const FileView = ({ room }: { room: string }) => {
     if (peer._peer) {
       peer._peer.onconnectionstatechange = () => {
         console.log("Connection state:", peer._peer?.connectionState);
-        setState(peer._peer?.connectionState ?? "disconnected");
+        setState(peer._peer?.connectionState ?? "");
       };
     }
   }, []);
+
+  useEffect(() => {
+    if (state === "disconnected") {
+      toast.error("Sender Disconnect!");
+    }
+    if (state === "failed") {
+      toast.error("Room closed.Redirecting to homepage!");
+      setTimeout(() => {
+        navigate("/");
+      }, 4000);
+    }
+  }, [state, navigate]);
 
   return (
     <div className="flex flex-col gap-5">
       {downloadLink ? (
         <div className="flex flex-col text-center gap-5">
           <h1>
-            {state === "connected" ? `Connected to Room: ${room} 🟢` : `Disconnected from Room: ${room} ❌`}
+            {state === "connected"
+              ? `Connected to Room: ${room} 🟢`
+              : `Disconnected from Room: ${room} ❌`}
           </h1>
           <h3>Preview: {fileName}</h3>
 
