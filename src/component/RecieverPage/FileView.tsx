@@ -210,6 +210,7 @@ const FileView = ({ room }: { room: string }) => {
             {state === "connected" ? `Connected to Room: ${room} 🟢` : `${room} room disconnected ❌`}
           </h1>
           <Loading />
+          <p className="text-lg font-normal text-center">waiting sender to upload...</p>
         </div>
       )}
     </div>
