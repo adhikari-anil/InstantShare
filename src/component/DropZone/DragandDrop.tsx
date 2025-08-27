@@ -14,7 +14,7 @@ const DragandDrop = ({
   socketId: string;
   username: string;
 }) => {
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFile] = useState<File[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<
     "idle" | "uploading" | "success"
@@ -29,8 +29,8 @@ const DragandDrop = ({
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragActive(false);
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile) setFile(droppedFile);
+    const droppedFile = e.dataTransfer.files;
+    if (droppedFile) setFile(Array.from(droppedFile));
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -52,13 +52,15 @@ const DragandDrop = ({
   };
 
   const handleUploadClick = async () => {
-    if (!file) {
+    if (!files) {
       alert("Please select files to upload.");
       return;
     }
     console.log("Upload Button clicked...");
     if (peer.dataChannel?.readyState === "open") {
-      peer.sendFile(file); // This will push data through the same channel
+      for (const file of files) {
+        await peer.sendFile(file); // This will push data through the same channel
+      }
       setUploadStatus("success");
       setTimeout(() => {
         setUploadStatus("idle");
@@ -67,12 +69,12 @@ const DragandDrop = ({
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = e.target.files?.[0] ?? null;
-    setFile(selectedFiles);
+    const selectedFiles = e.target.files ?? null;
+    if (selectedFiles) setFile(Array.from(selectedFiles));
   };
 
-  const removeFile = () => {
-    setFile(null);
+  const removeFile = (fileIndex: number) => {
+    setFile((prevfile) => prevfile.filter((_, index) => index !== fileIndex));
   };
 
   const formatFileSize = (bytes: number) => {
@@ -178,7 +180,7 @@ const DragandDrop = ({
     }
   }, []);
 
-    useEffect(() => {
+  useEffect(() => {
     if (state === "disconnected") {
       toast.error("Receiver Disconnected...");
     }
@@ -191,8 +193,8 @@ const DragandDrop = ({
   }, [state, navigate]);
 
   return (
-    <div className="mx-auto p-6 bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="mb-8 flex flex-col gap-4">
+    <div className="mx-auto bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="mb-2 flex flex-col gap-2">
         {state === "disconnected" || state === "failed" ? (
           <h1>
             {username} has disconnected from room {roomCode}
@@ -214,7 +216,7 @@ const DragandDrop = ({
           ${
             isDragActive
               ? "border-blue-500 bg-blue-100 shadow-lg scale-[1.02]"
-              : file
+              : files
               ? "border-green-400 bg-green-50 hover:bg-green-100"
               : "border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50"
           }
@@ -253,7 +255,7 @@ const DragandDrop = ({
                 />
               </div>
 
-              {file ? (
+              {files ? (
                 <p className="text-lg font-medium text-green-700">
                   File ready to upload
                 </p>
@@ -283,40 +285,46 @@ const DragandDrop = ({
         )}
       </div>
 
-      {file && (
+      {files.length > 0 && (
         <div className="mt-8">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
             <File className="w-5 h-5 mr-2" />
             Selected Files
           </h3>
+          <div className="max-h-60 overflow-y-auto space-y-2 p-1">
+            {files.map((file, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl shadow-sm"
+              >
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <div className="text-2xl">{getFileIcon(file.name)}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {file.name}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {formatFileSize(file.size)}
+                    </p>
+                  </div>
+                </div>
 
-          <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
-            <div className="flex items-center space-x-3 flex-1 min-w-0">
-              <div className="text-2xl">{getFileIcon(file.name)}</div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {file.name}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {formatFileSize(file.size)}
-                </p>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeFile(index);
+                  }}
+                  className="ml-4 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors duration-200"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-            </div>
-
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                removeFile();
-              }}
-              className="ml-4 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors duration-200"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            ))}
           </div>
         </div>
       )}
 
-      <div className="mt-8 flex justify-center items-center">
+      <div className="flex justify-center items-center">
         <button
           onClick={() => {
             handleUploadClick();

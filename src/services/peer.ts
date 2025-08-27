@@ -69,56 +69,61 @@ class PeerService {
     }
   }
 
-  public async sendFile(file: File, chunkSize = 16 * 1024) {
-    if (!this.dataChannel || this.dataChannel.readyState !== "open") {
-      console.error("Data channel is not open.");
-      return;
-    }
-
-    const dataChannel = this.dataChannel;
-    const fileReader = new FileReader();
-    let offset = 0;
-
-    const totalChunks = Math.ceil(file.size / chunkSize);
-
-    //send meta data first
-    dataChannel.send(
-      JSON.stringify({
-        type: "file-meta",
-        name: file.name,
-        size: file.size,
-        mime: file.type, // This is where image/png, application/pdf comes from
-        done: true,
-        totalChunks,
-      })
-    );
-    console.log(
-      `Starting to send file: ${file.name}, size: ${file.size}, chunks: ${totalChunks}`
-    );
-
-    const readSlice = (o: number) => {
-      const slice = file.slice(offset, o + chunkSize);
-      fileReader.readAsArrayBuffer(slice);
-    };
-
-    fileReader.onload = () => {
-      if (fileReader.result) {
-        dataChannel.send(fileReader.result as ArrayBuffer);
-        offset += chunkSize;
-
-        if (offset < file.size) {
-          readSlice(offset);
-        } else {
-          console.log("File sending complete.");
-        }
+  public async sendFile(file: File, chunkSize = 16 * 1024): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.dataChannel || this.dataChannel.readyState !== "open") {
+        console.error("Data channel is not open.");
+        reject("Data channel is not open.");
+        return;
       }
-    };
 
-    fileReader.onerror = (err) => {
-      console.error("File reading error:", err);
-    };
+      const dataChannel = this.dataChannel;
+      const fileReader = new FileReader();
+      let offset = 0;
 
-    readSlice(0);
+      const totalChunks = Math.ceil(file.size / chunkSize);
+
+      //send meta data first
+      dataChannel.send(
+        JSON.stringify({
+          type: "file-meta",
+          name: file.name,
+          size: file.size,
+          mime: file.type, // This is where image/png, application/pdf comes from
+          done: true,
+          totalChunks,
+        })
+      );
+      console.log(
+        `Starting to send file: ${file.name}, size: ${file.size}, chunks: ${totalChunks}`
+      );
+
+      const readSlice = (o: number) => {
+        const slice = file.slice(offset, o + chunkSize);
+        fileReader.readAsArrayBuffer(slice);
+      };
+
+      fileReader.onload = () => {
+        if (fileReader.result) {
+          dataChannel.send(fileReader.result as ArrayBuffer);
+          offset += chunkSize;
+
+          if (offset < file.size) {
+            readSlice(offset);
+          } else {
+            console.log("File sending complete.");
+            resolve();
+          }
+        }
+      };
+
+      fileReader.onerror = (err) => {
+        console.error("File reading error:", err);
+        reject(err);
+      };
+
+      readSlice(0);
+    });
   }
 }
 

@@ -16,6 +16,7 @@ const Room = ({ roomType }: { roomType: string }) => {
 
   const router = useNavigate();
 
+  console.log("checker...");
   const socket = useSocket();
 
   const handleReceiverStatus = (id: string) => {
