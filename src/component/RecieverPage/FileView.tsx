@@ -5,80 +5,87 @@ import Loading from "../Loading/Loading";
 import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
 
+interface ReceivedFile {
+  name: string;
+  size: number;
+  mime: string;
+  blob: Blob;
+  progress: number;
+  totalChunks: number;
+}
+
 const FileView = ({ room }: { room: string }) => {
   const [senderId, setSenderId] = useState("");
   const socket = useSocket();
   const [state, setState] = useState("");
-  const [downloadLink, setUrl] = useState<string>();
-  const [fileName, setFileName] = useState<string>("");
-  const [fileType, setFileType] = useState<string>("");
+  const [receivedFiles, setReceivedFiles] = useState<ReceivedFile[]>([]);
   const navigate = useNavigate();
 
+  console.log("Received files: ", receivedFiles);
+
   useEffect(() => {
-    // set up data channel handler
     peer.onDataChannel = (channel) => {
-      let receivedBuffers: ArrayBuffer[] = [];
-      let fileMeta: {
-        name: string;
-        size: number;
-        totalChunks: number;
-        mime: string;
-      } | null = null;
-      let receivedChunkCount = 0;
+      let buffers: ArrayBuffer[] = [];
+      let fileMeta: ReceivedFile | null = null;
+      let chunkCount = 0;
 
       channel.onmessage = (event) => {
         if (typeof event.data === "string") {
           try {
-            const message = JSON.parse(event.data);
-
-            if (message.type === "file-meta") {
+            const msg = JSON.parse(event.data);
+            if (msg.type === "file-meta") {
               fileMeta = {
-                name: message.name,
-                size: message.size,
-                totalChunks: message.totalChunks,
-                mime: message.mime,
+                name: msg.name,
+                size: msg.size,
+                mime: msg.mime,
+                blob: new Blob([]),
+                progress: 0,
+                totalChunks: msg.totalChunks ?? 1,
               };
-
-              receivedBuffers = [];
-              receivedChunkCount = 0;
-
+              buffers = [];
+              chunkCount = 0;
               console.log(
-                `Receiving file: ${fileMeta.name}, size: ${fileMeta.size}, chunks: ${fileMeta.totalChunks}`
+                `Receiving file: ${fileMeta.name}, size: ${fileMeta.size}, chunks: ${msg.totalChunks}`
               );
             }
           } catch (err) {
             console.error("Failed to parse metadata:", err);
           }
         } else {
-          // Binary data chunk
-          receivedBuffers.push(event.data);
-          receivedChunkCount++;
+          // binary chunk
+          buffers.push(event.data);
+          chunkCount++;
 
           if (fileMeta) {
-            console.log(
-              `Received ${receivedChunkCount}/${fileMeta.totalChunks} chunks`
+            console.log("ChunkCount: ", chunkCount);
+            console.log("File Size: ", fileMeta.size);
+            const recievedBytes = buffers.reduce(
+              (a, b) => a + (b as ArrayBuffer).byteLength,
+              0
             );
-
-            if (receivedChunkCount === fileMeta.totalChunks) {
-              const blob = new Blob(receivedBuffers);
-              const url = URL.createObjectURL(blob);
-
-              console.log("File received completely:", fileMeta.name, url);
-              setUrl(url);
-              setFileName(fileMeta.name);
-              setFileType(fileMeta.mime);
-
-              // Reset
+            fileMeta.progress = (recievedBytes / fileMeta.size) * 100;
+            console.log("Progress: ", fileMeta.progress);
+            console.log("filemeta check: ", fileMeta);
+            if (
+              chunkCount === fileMeta.totalChunks ||
+              recievedBytes >= fileMeta.size
+            ) {
+              const completedFile = {
+                ...fileMeta,
+                blob: new Blob(buffers, { type: fileMeta.mime }),
+              };
+              console.log("Complete file: ", completedFile);
+              setReceivedFiles((prev) => [...prev, completedFile]);
               fileMeta = null;
-              receivedBuffers = [];
-              receivedChunkCount = 0;
+              buffers = [];
+              chunkCount = 0;
             }
           }
         }
       };
-      channel.onopen = () => {
+
+      channel.onopen = () =>
         console.log("Data channel opened from receiver's side...");
-      };
       peer.dataChannel = channel;
     };
 
@@ -89,13 +96,11 @@ const FileView = ({ room }: { room: string }) => {
       from: string;
       offer: RTCSessionDescriptionInit;
     }) => {
-      console.log("Receiver offer: ", offer);
       setSenderId(from);
       const answer = await peer.getAnswer(offer);
       socket.emit("answer", { to: from, answer: answer });
     };
 
-    // ICE Candidate handler..
     const handleIceCandidate = async ({
       candidate,
     }: {
@@ -104,7 +109,6 @@ const FileView = ({ room }: { room: string }) => {
       await peer.addIceCandidate(new RTCIceCandidate(candidate));
     };
 
-    //gathering ICE candidate in receiver's end...
     peer.onIceCandidate((candidate) => {
       if (senderId) {
         socket.emit("ice-candidate", {
@@ -114,7 +118,6 @@ const FileView = ({ room }: { room: string }) => {
       }
     });
 
-    console.log("Socket le listen garxa");
     socket.on("incomming-offer", handleIncommingOffer);
     socket.on("ice-candidate", handleIceCandidate);
 
@@ -126,91 +129,90 @@ const FileView = ({ room }: { room: string }) => {
 
   useEffect(() => {
     if (peer._peer) {
-      peer._peer.onconnectionstatechange = () => {
-        console.log("Connection state:", peer._peer?.connectionState);
+      peer._peer.onconnectionstatechange = () =>
         setState(peer._peer?.connectionState ?? "");
-      };
     }
   }, []);
 
   useEffect(() => {
-    if (state === "disconnected") {
-      toast.error("Sender Disconnect!");
-    }
+    if (state === "disconnected") toast.error("Sender Disconnect!");
     if (state === "failed") {
-      toast.error("Room closed.Redirecting to homepage!");
-      setTimeout(() => {
-        navigate("/");
-      }, 4000);
+      toast.error("Room closed. Redirecting to homepage!");
+      setTimeout(() => navigate("/"), 4000);
     }
   }, [state, navigate]);
 
   return (
     <div className="flex flex-col gap-5">
-      {downloadLink ? (
-        <div className="flex flex-col text-center gap-5">
-          <h1>
-            {state === "connected"
-              ? `Connected to Room: ${room} 🟢`
-              : `Disconnected from Room: ${room} ❌`}
-          </h1>
-          <h3>Preview: {fileName}</h3>
+      <h1>
+        {state === "connected"
+          ? `Connected to Room: ${room} 🟢`
+          : `Disconnected from Room: ${room} ❌`}
+      </h1>
 
-          {fileType.startsWith("image/") && (
-            <img
-              src={downloadLink}
-              alt="Preview"
-              style={{ maxWidth: "100%", maxHeight: 400 }}
-            />
-          )}
-
-          {fileType.startsWith("video/") && (
-            <div className="flex justify-center">
-              <video src={downloadLink} controls height={300} width={300} />
-            </div>
-          )}
-
-          {fileType.startsWith("audio/") && (
-            <audio src={downloadLink} controls />
-          )}
-
-          {fileType === "application/pdf" && (
-            <iframe
-              src={downloadLink}
-              style={{ width: "80%", height: "200px" }}
-            />
-          )}
-
-          {!fileType.startsWith("image/") &&
-            !fileType.startsWith("audio/") &&
-            !fileType.startsWith("video/") &&
-            fileType !== "application/pdf" && (
-              <p>Cannot preview this file type. You can still download it.</p>
-            )}
-
-          <div className="flex justify-center">
-            <button
-              onClick={() => {
-                const a = document.createElement("a");
-                a.href = downloadLink;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-              }}
-              className="bg-blue-600 p-2 text-white rounded-lg hover:bg-blue-700 hover:cursor-pointer transition-colors duration-200 font-medium w-1/2"
-            >
-              Download
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-6">
-          <h1>
-            {state === "connected" ? `Connected to Room: ${room} 🟢` : `${room} room disconnected ❌`}
-          </h1>
+      {receivedFiles.length === 0 && (
+        <div className="flex flex-col gap-6 items-center">
           <Loading />
-          <p className="text-lg font-normal text-center">waiting sender to upload...</p>
+          <p className="text-lg text-center">Waiting for sender to upload...</p>
+        </div>
+      )}
+
+      {receivedFiles.length > 0 && (
+        <div className="flex flex-col gap-4 max-h-[500px] overflow-y-auto p-2">
+          {receivedFiles.map((file, idx) =>
+            file ? (
+              <div
+                key={idx}
+                className="flex flex-col items-center gap-3 border p-4 rounded-xl bg-white shadow-sm"
+              >
+                <h3 className="font-semibold w-64 overflow-hidden">
+                  <span className="inline-block whitespace-nowrap animate-marquee">
+                    {file.name}
+                  </span>
+                </h3>
+                {file.mime.startsWith("image/") && (
+                  <img
+                    src={URL.createObjectURL(file.blob)}
+                    alt={file.name}
+                    className="max-w-full max-h-60"
+                  />
+                )}
+
+                {file.mime.startsWith("video/") && (
+                  <video
+                    src={URL.createObjectURL(file.blob)}
+                    controls
+                    className="max-w-full max-h-60"
+                  />
+                )}
+
+                {file.mime.startsWith("audio/") && (
+                  <audio src={URL.createObjectURL(file.blob)} controls />
+                )}
+
+                {file.mime === "application/pdf" && (
+                  <iframe
+                    src={URL.createObjectURL(file.blob)}
+                    className="w-4/5 h-48"
+                  />
+                )}
+
+                <button
+                  onClick={() => {
+                    const a = document.createElement("a");
+                    a.href = URL.createObjectURL(file.blob);
+                    a.download = file.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                  }}
+                  className="bg-blue-600 p-2 text-white rounded-lg hover:bg-blue-700 w-1/2"
+                >
+                  Download
+                </button>
+              </div>
+            ) : null
+          )}
         </div>
       )}
     </div>
