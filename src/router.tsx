@@ -18,7 +18,7 @@ const router = createBrowserRouter([
     element: <Sender />,
   },
   {
-    path: "/reciever",
+    path: "/receiver",
     element: <Reciever />,
   },
 ]);

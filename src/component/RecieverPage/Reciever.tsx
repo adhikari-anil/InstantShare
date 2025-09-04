@@ -17,6 +17,23 @@ const Receiver = () => {
   };
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const qrName = params.get("name");
+    const qrCode = params.get("roomCode");
+
+    if (qrName && qrCode) {
+      setUsername(qrName);
+      setRoom(qrCode);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (room && username) {
+      socket.emit("joinAsReceiver", { room: room, username: username });
+    }
+  }, [socket, room, username]);
+
+  useEffect(() => {
     const handleInvalidRoom = () => {
       toast.error("Invalid room code");
       setUsername("");
@@ -78,9 +95,11 @@ const Receiver = () => {
             />
 
             <button
-              className={`bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 transition-all font-semibold ${!room.trim() || !username.trim()
-      ? 'bg-blue-300 cursor-not-allowed'
-      : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+              className={`bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 transition-all font-semibold ${
+                !room.trim() || !username.trim()
+                  ? "bg-blue-300 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
+              }`}
               onClick={handleJoinRoom}
               disabled={!room.trim() || !username.trim()}
             >

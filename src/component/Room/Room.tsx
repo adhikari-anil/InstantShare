@@ -4,34 +4,28 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSocket } from "@/context/socketContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import Loading from "../Loading/Loading";
 import toast from "react-hot-toast";
+import { QRCodeCanvas } from "qrcode.react";
 
 const Room = ({ roomType }: { roomType: string }) => {
   const [roomName, setRoomName] = useState<string>("");
   const [id, setID] = useState<string>("");
-  const [loading, setLoading] = useState(false);
+  const [qrValue, setQrCode] = useState("");
 
-  const router = useNavigate();
+  const navigate = useNavigate();
 
   console.log("checker...");
   const socket = useSocket();
 
-  const handleReceiverStatus = (id: string) => {
-    socket.on("receiver-joined", (data) => {
-      console.log("Receiver joined:", data);
-      console.log("Receiver joined:", data.socketId);
-      setLoading(false);
-      router("/upload", {
-        state: {
-          roomCode: id,
-          username: data.username,
-          socketId: data.socketId,
-        },
-      });
-    });
+  const generateQR = (id: string) => {
+    if (roomName && id) {
+      const url = `${window.location.origin}/receiver?name=${encodeURIComponent(
+        roomName
+      )}&roomCode=${encodeURIComponent(id)}`;
+      setQrCode(url);
+    }
   };
 
   const generateRoomCode = () => {
@@ -40,11 +34,8 @@ const Room = ({ roomType }: { roomType: string }) => {
       "-" +
       Math.random().toString(36).substring(2, 8);
     setID(id);
-    if (id) {
-      socket.emit("joinAsSender", id);
-    }
-    setLoading(true);
-    handleReceiverStatus(id);
+    generateQR(id);
+    socket.emit("joinAsSender", id);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,6 +50,27 @@ const Room = ({ roomType }: { roomType: string }) => {
     generateRoomCode();
   };
 
+  useEffect(() => {
+    const handleReceiverJoined = (data: {
+      username: string;
+      socketId: string;
+    }) => {
+      console.log("Receiver joined:", data);
+      navigate("/upload", {
+        state: {
+          roomCode: id,
+          username: data.username,
+          socketId: data.socketId,
+        },
+      });
+    };
+
+    socket.on("receiver-joined", handleReceiverJoined);
+    return () => {
+      socket.off("receiver-joined", handleReceiverJoined);
+    };
+  }, [socket, id, navigate]);
+
   return (
     <DialogHeader className="flex flex-col gap-4">
       <DialogTitle className="text-lg md:text-2xl font-bold">
@@ -68,8 +80,13 @@ const Room = ({ roomType }: { roomType: string }) => {
         Create a {roomType} room for secure file sharing.
       </DialogDescription>
       <div className="flex flex-col gap-4">
-        {loading ? (
-          <Loading />
+        {qrValue ? (
+          <div className="mt-4 flex flex-col justify-center items-center gap-2">
+            <QRCodeCanvas value={qrValue} size={200} />
+            <p className="text-lg text-bold text-center break-words">
+              Waiting for receiver...
+            </p>
+          </div>
         ) : (
           <div className="flex flex-col gap-4">
             <label htmlFor="roomName" className="text-lg font-semibold">

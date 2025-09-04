@@ -38,7 +38,7 @@ const LandingPage = () => {
             </p>
             <button
               className="cursor-pointer border-2 rounded-full p-2 animate-bounce"
-              onClick={() => router("/reciever")}
+              onClick={() => router("/receiver")}
             >
               <HandCoins />
             </button>
