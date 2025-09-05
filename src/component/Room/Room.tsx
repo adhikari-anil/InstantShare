@@ -12,21 +12,10 @@ import { QRCodeCanvas } from "qrcode.react";
 const Room = ({ roomType }: { roomType: string }) => {
   const [roomName, setRoomName] = useState<string>("");
   const [id, setID] = useState<string>("");
-  const [qrValue, setQrCode] = useState("");
 
   const navigate = useNavigate();
 
-  console.log("checker...");
   const socket = useSocket();
-
-  const generateQR = (id: string) => {
-    if (roomName && id) {
-      const url = `${window.location.origin}/receiver?name=${encodeURIComponent(
-        roomName
-      )}&roomCode=${encodeURIComponent(id)}`;
-      setQrCode(url);
-    }
-  };
 
   const generateRoomCode = () => {
     const id =
@@ -34,7 +23,6 @@ const Room = ({ roomType }: { roomType: string }) => {
       "-" +
       Math.random().toString(36).substring(2, 8);
     setID(id);
-    generateQR(id);
     socket.emit("joinAsSender", id);
   };
 
@@ -49,6 +37,12 @@ const Room = ({ roomType }: { roomType: string }) => {
     }
     generateRoomCode();
   };
+
+  const qrValue = id
+    ? `${window.location.origin}/receiver?name=${encodeURIComponent(
+        roomName
+      )}&roomCode=${encodeURIComponent(id)}`
+    : "";
 
   useEffect(() => {
     const handleReceiverJoined = (data: {
