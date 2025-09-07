@@ -5,6 +5,11 @@ import { useSocket } from "@/context/socketContext";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
 
+type FileWithStatus = {
+  file: File;
+  done: boolean;
+};
+
 const DragandDrop = ({
   roomCode,
   socketId,
@@ -14,7 +19,7 @@ const DragandDrop = ({
   socketId: string;
   username: string;
 }) => {
-  const [files, setFile] = useState<File[]>([]);
+  const [files, setFile] = useState<FileWithStatus[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<
     "idle" | "uploading" | "success"
@@ -26,11 +31,13 @@ const DragandDrop = ({
   const socket = useSocket();
   const navigate = useNavigate();
 
+  console.log("Files ma k hudoraxah tah: ", files);
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragActive(false);
-    const droppedFile = e.dataTransfer.files;
-    if (droppedFile) setFile(Array.from(droppedFile));
+    const droppedFile = Array.from(e.dataTransfer.files);
+    setFile(droppedFile.map((file) => ({ file, done: false })));
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -52,14 +59,20 @@ const DragandDrop = ({
   };
 
   const handleUploadClick = async () => {
-    if (!files) {
-      alert("Please select files to upload.");
+    if (files.length === 0) {
+      toast.error("Please select files to upload.");
       return;
     }
     console.log("Upload Button clicked...");
     if (peer.dataChannel?.readyState === "open") {
-      for (const file of files) {
-        await peer.sendFile(file); // This will push data through the same channel
+      for (const [i, file] of files.entries()) {
+        console.log("output from upload button: ", file);
+        await peer.sendFile(file.file); // This will push data through the same channel
+        console.log("File Sent!");
+
+        setFile((prev) =>
+          prev.map((f, index) => (index === i ? { ...f, done: true } : f))
+        );
       }
       setUploadStatus("success");
       setTimeout(() => {
@@ -69,8 +82,8 @@ const DragandDrop = ({
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = e.target.files ?? null;
-    if (selectedFiles) setFile(Array.from(selectedFiles));
+    const selectedFiles = Array.from(e.target.files!);
+    setFile(selectedFiles.map((file) => ({ file, done: false })));
   };
 
   const removeFile = (fileIndex: number) => {
@@ -298,16 +311,18 @@ const DragandDrop = ({
                 className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl shadow-sm"
               >
                 <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <div className="text-2xl">{getFileIcon(file.name)}</div>
+                  <div className="text-2xl">{getFileIcon(file.file.name)}</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">
-                      {file.name}
+                      {file.file.name}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {formatFileSize(file.size)}
+                      {formatFileSize(file.file.size)}
                     </p>
                   </div>
                 </div>
+
+                {file.done && <Check className="w-3 h-3 text-black" />}
 
                 <button
                   onClick={(e) => {

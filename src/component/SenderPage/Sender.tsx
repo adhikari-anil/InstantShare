@@ -31,52 +31,48 @@ const Sender = () => {
             </Dialog>
           </div>
           <div className="w-full sm:w-1/2 flex flex-row gap-5 rounded-md border-2 border-transparent  transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-red-500 justify-center items-center p-4 bg-cyan-600">
-            <Tooltip>
-              <TooltipTrigger>
-                <Dialog>
-                  <DialogTrigger asChild>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <button
                       className="cursor-pointer p-2 text-2xl text-white font-medium"
                       disabled
                     >
                       Create Public Room
                     </button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <Room roomType={"public"} />
-                  </DialogContent>
-                </Dialog>
-              </TooltipTrigger>
-              <TooltipContent className="font-bold text-xl text-red-600 animate-marquee">
-                <p>
-                  Comming Soon ! ! !
-                </p>
-              </TooltipContent>
-            </Tooltip>
+                  </TooltipTrigger>
+                  <TooltipContent className="font-bold text-xl text-red-600 animate-marquee">
+                    <p>Comming Soon ! ! !</p>
+                  </TooltipContent>
+                </Tooltip>
+              </DialogTrigger>
+              <DialogContent>
+                <Room roomType={"public"} />
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="w-full sm:w-1/2 flex flex-row gap-5 rounded-md border-2 border-transparent  transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-red-500 justify-center items-center p-4 bg-cyan-600">
-            <Tooltip>
-              <TooltipTrigger>
-                <Dialog>
-                  <DialogTrigger asChild>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <button
                       className="cursor-pointer p-2 text-2xl text-white font-medium"
                       disabled
                     >
                       Limited Boardcast
                     </button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <Room roomType={"Boardcast"} />
-                  </DialogContent>
-                </Dialog>
-              </TooltipTrigger>
-              <TooltipContent className="font-bold text-xl text-red-600 animate-marquee">
-                <p>
-                  Comming Soon ! ! !
-                </p>
-              </TooltipContent>
-            </Tooltip>
+                  </TooltipTrigger>
+                  <TooltipContent className="font-bold text-xl text-red-600 animate-marquee">
+                    <p>Comming Soon ! ! !</p>
+                  </TooltipContent>
+                </Tooltip>
+              </DialogTrigger>
+              <DialogContent>
+                <Room roomType={"Boardcast"} />
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
