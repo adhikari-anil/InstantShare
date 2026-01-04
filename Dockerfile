@@ -5,18 +5,18 @@ WORKDIR /app
 # Pass mode as build ARG (default to production)
 #ARG MODE=production
 
-COPY ./instantShare/package*.json ./
+COPY package*.json ./
 RUN npm install
-COPY ./instantShare/. .
+COPY . .
 
 # Replace .env with the correct environment file
 #RUN cp .env.${MODE} .env
 
 RUN npm run build
 
-#stage 2: Serve with Niginx
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY ./nginx/nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-CMD ["nginx","-g","daemon off;"]
+# Stage 2: just keep built files (NO nginx here)
+FROM node:22-alpine
+WORKDIR /app
+COPY --from=build /app/dist ./dist
+
+CMD ["sh", "-c", "npx serve -s dist -l 3000"]
