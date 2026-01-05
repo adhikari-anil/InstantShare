@@ -5,76 +5,173 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ArrowRight, CastIcon, Lock, LockOpenIcon } from "lucide-react";
 
 const Sender = () => {
   return (
-    <div className="mx-auto h-screen w-11/12">
-      <div className="flex flex-col items-center justify-center h-screen">
-        {/* Details */}
-        <div className="flex flex-1 flex-col gap-4 pt-20">
-          <h1 className="text-[35px] md:text-[50px] lg:text-[60px] xl:text-[70px] 2xl:text-[100px] font-extrabold text-center bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 animate-fade-in bg-clip-text text-transparent tracking-tight leading-normal">
-            Choose your preferrance to share files instantly.
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-gradient-to-br from-background via-background to-slate-900/50 gap-5">
+      {/* Header Section */}
+      <div className="max-w-full w-full mb-16">
+        <div className="space-y-4 text-center">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground leading-tight text-pretty">
+            Choose Your Sharing Method
           </h1>
+          <p className="text-lg text-muted-foreground">
+            Select how you'd like to share your files securely and instantly
+          </p>
         </div>
-        {/* Role Button */}
-        <div className="flex flex-1 flex-col items-center rounded-lg p-4 gap-8 mt-10 w-full">
-          <div className="w-full sm:w-1/2 flex flex-row gap-5 rounded-lg border-2 border-transparent  transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-red-500 justify-center items-center p-4 bg-cyan-600">
-            <Dialog>
-              <DialogTrigger asChild>
-                <button className="cursor-pointer p-2 text-2xl text-white font-medium">
-                  Create Private Room
+      </div>
+      {/* Role Button */}
+      <div className="max-w-4xl w-full space-y-4">
+        <Dialog>
+          <DialogTrigger asChild>
+            <button className="w-full group">
+              <div
+                className={`
+                            flex items-center gap-4 p-6 rounded-lg
+                            border border-border transition-all duration-300 bg-card hover:bg-card/80 hover:border-primary/50 cursor-pointer hover:shadow-lg hover:shadow-primary/10 active:scale-[0.98]"
+                          `}
+              >
+                {/* Icon */}
+                <div
+                  className={`
+                              flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg
+                              transition-colors duration-300 bg-primary/10 text-primary group-hover:bg-primary/20"
+                            `}
+                >
+                  <Lock className="w-6 h-6" />
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 text-left">
+                  <h3 className="text-lg font-semibold text-foreground mb-1">
+                    Private Sharing
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Send files securely to specific recipients
+                  </p>
+                </div>
+
+                {/* Badge or Arrow */}
+                <div className="flex-shrink-0">
+                  <ArrowRight className="w-5 h-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
+              </div>
+            </button>
+          </DialogTrigger>
+          <DialogContent className=" rounded-lg border border-border transition-all duration-300 bg-card hover:bg-card/80 hover:border-primary/50 cursor-pointer hover:shadow-lg hover:shadow-primary/10 active:scale-[0.98]">
+            <Room roomType={"private"} />
+          </DialogContent>
+        </Dialog>
+      </div>
+      <div className="max-w-4xl w-full space-y-4">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button disabled className="w-full group">
+                  <div
+                    className={`
+                            flex items-center gap-4 p-6 rounded-lg
+                            border border-border transition-all duration-300 bg-card hover:bg-card/80 hover:border-primary/50 cursor-pointer hover:shadow-lg hover:shadow-primary/10 active:scale-[0.98]"
+                          `}
+                  >
+                    {/* Icon */}
+                    <div
+                      className={`
+                              flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg
+                              transition-colors duration-300 bg-primary/10 text-primary group-hover:bg-primary/20"
+                            `}
+                    >
+                      <LockOpenIcon className="w-6 h-6" />
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 text-left">
+                      <h3 className="text-lg font-semibold text-foreground mb-1">
+                        Public Sharing
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Send files Publically to specific recipients
+                      </p>
+                    </div>
+
+                    {/* Badge or Arrow */}
+                    <div className="flex-shrink-0">
+                      <ArrowRight className="w-5 h-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </div>
+                  </div>
                 </button>
-              </DialogTrigger>
-              <DialogContent>
-                <Room roomType={"private"} />
-              </DialogContent>
-            </Dialog>
-          </div>
-          <div className="w-full sm:w-1/2 flex flex-row gap-5 rounded-md border-2 border-transparent  transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-red-500 justify-center items-center p-4 bg-cyan-600">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      className="cursor-pointer p-2 text-2xl text-white font-medium"
-                      disabled
+              </TooltipTrigger>
+              <TooltipContent className="font-bold text-xl text-rose-100 animate-marquee">
+                <p>Comming Soon ! ! !</p>
+              </TooltipContent>
+            </Tooltip>
+          </DialogTrigger>
+          <DialogContent>
+            <Room roomType={"public"} />
+          </DialogContent>
+        </Dialog>
+      </div>
+      <div className="max-w-4xl w-full space-y-4">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button disabled className="w-full group">
+                  <div
+                    className={`
+                            flex items-center gap-4 p-6 rounded-lg
+                            border border-border transition-all duration-300 bg-card hover:bg-card/80 hover:border-primary/50 cursor-pointer hover:shadow-lg hover:shadow-primary/10 active:scale-[0.98]"
+                          `}
+                  >
+                    {/* Icon */}
+                    <div
+                      className={`
+                              flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg
+                              transition-colors duration-300 bg-primary/10 text-primary group-hover:bg-primary/20"
+                            `}
                     >
-                      Create Public Room
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="font-bold text-xl text-red-600 animate-marquee">
-                    <p>Comming Soon ! ! !</p>
-                  </TooltipContent>
-                </Tooltip>
-              </DialogTrigger>
-              <DialogContent>
-                <Room roomType={"public"} />
-              </DialogContent>
-            </Dialog>
-          </div>
-          <div className="w-full sm:w-1/2 flex flex-row gap-5 rounded-md border-2 border-transparent  transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-red-500 justify-center items-center p-4 bg-cyan-600">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      className="cursor-pointer p-2 text-2xl text-white font-medium"
-                      disabled
-                    >
-                      Limited Boardcast
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="font-bold text-xl text-red-600 animate-marquee">
-                    <p>Comming Soon ! ! !</p>
-                  </TooltipContent>
-                </Tooltip>
-              </DialogTrigger>
-              <DialogContent>
-                <Room roomType={"Boardcast"} />
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
+                      <CastIcon className="w-6 h-6" />
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 text-left">
+                      <h3 className="text-lg font-semibold text-foreground mb-1">
+                        Limited Broadcast
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Send files to multiple recipients with limits
+                      </p>
+                    </div>
+
+                    {/* Badge or Arrow */}
+                    <div className="flex-shrink-0">
+                      <ArrowRight className="w-5 h-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </div>
+                  </div>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="font-bold text-xl text-rose-100 animate-marquee">
+                <p>Comming Soon ! ! !</p>
+              </TooltipContent>
+            </Tooltip>
+          </DialogTrigger>
+          <DialogContent>
+            <Room roomType={"boardcast"} />
+          </DialogContent>
+        </Dialog>
+      </div>
+      {/* Footer Info */}
+      <div className="max-w-4xl w-full mt-16 pt-8 border-t border-border">
+        <p className="text-sm text-muted-foreground text-center">
+          Your files are encrypted and transferred securely. Learn more about
+          our
+          <span className="text-primary hover:underline cursor-pointer ml-1">
+            security practices
+          </span>
+          .
+        </p>
       </div>
     </div>
   );
