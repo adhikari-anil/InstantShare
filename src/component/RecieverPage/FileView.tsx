@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Loading from "../Loading/Loading";
 import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 interface ReceivedFile {
   name: string;
@@ -158,44 +159,95 @@ const FileView = ({ room }: { room: string }) => {
       )}
 
       {receivedFiles.length > 0 && (
-        <div className="flex flex-col gap-4 max-h-[500px] overflow-y-auto p-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-[600px] overflow-y-auto p-2">
           {receivedFiles.map((file, idx) =>
             file ? (
               <div
                 key={idx}
-                className="flex flex-col items-center gap-3 border p-4 rounded-xl bg-white shadow-sm"
+                className="flex flex-col justify-between items-center gap-2 border p-4 rounded-xl bg-white shadow-sm"
               >
-                <h3 className="font-semibold w-64 overflow-hidden">
+                <h3 className="font-semibold w-full sm:w-50 overflow-hidden">
                   <span className="inline-block whitespace-nowrap animate-marquee">
                     {file.name}
                   </span>
                 </h3>
-                {file.mime.startsWith("image/") && (
-                  <img
-                    src={URL.createObjectURL(file.blob)}
-                    alt={file.name}
-                    className="max-w-full max-h-60"
-                  />
-                )}
+                <div className="h-60 w-full flex items-center justify-center">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <div className="h-full w-full flex items-center justify-center bg-muted/20 rounded cursor-pointer hover:bg-muted/30 transition">
+                        {/* IMAGE */}
+                        {file.mime.startsWith("image/") && (
+                          <img
+                            src={URL.createObjectURL(file.blob)}
+                            alt={file.name}
+                            className="max-w-full max-h-60 object-contain"
+                          />
+                        )}
 
-                {file.mime.startsWith("video/") && (
-                  <video
-                    src={URL.createObjectURL(file.blob)}
-                    controls
-                    className="max-w-full max-h-60"
-                  />
-                )}
+                        {/* VIDEO */}
+                        {file.mime.startsWith("video/") && (
+                          <video
+                            src={URL.createObjectURL(file.blob)}
+                            className="max-w-full max-h-60 pointer-events-none"
+                          />
+                        )}
 
-                {file.mime.startsWith("audio/") && (
-                  <audio src={URL.createObjectURL(file.blob)} controls />
-                )}
+                        {/* PDF */}
+                        {file.mime === "application/pdf" && (
+                          <iframe
+                            src={URL.createObjectURL(file.blob)}
+                            className="w-4/5 h-48 pointer-events-none"
+                          />
+                        )}
 
-                {file.mime === "application/pdf" && (
-                  <iframe
-                    src={URL.createObjectURL(file.blob)}
-                    className="w-4/5 h-48"
-                  />
-                )}
+                        {/* FALLBACK */}
+                        {!(
+                          file.mime.startsWith("image/") ||
+                          file.mime.startsWith("video/") ||
+                          file.mime === "application/pdf"
+                        ) && (
+                          <div className="text-muted-foreground text-sm">
+                            Preview not available
+                          </div>
+                        )}
+                      </div>
+                    </DialogTrigger>
+                    <DialogContent className="!fixed !inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !w-[100dvw] !h-[100dvh] !max-w-none !max-h-none !rounded-none p-0 overflow-hidden">
+                      <div className="w-full h-full flex items-center justify-center bg-black overflow-hidden p-4">
+                        {/* IMAGE */}
+                        {file.mime.startsWith("image/") && (
+                          <img
+                            src={URL.createObjectURL(file.blob)}
+                            alt={file.name}
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        )}
+
+                        {/* VIDEO */}
+                        {file.mime.startsWith("video/") && (
+                          <video
+                            src={URL.createObjectURL(file.blob)}
+                            controls
+                            autoPlay
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        )}
+
+                        {/* PDF */}
+                        {file.mime === "application/pdf" && (
+                          <div className="w-full h-full bg-black">
+                            <iframe
+                              src={`${URL.createObjectURL(
+                                file.blob
+                              )}#zoom=page-fit`}
+                              className="w-full h-full border-0"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
 
                 <button
                   onClick={() => {
@@ -206,7 +258,7 @@ const FileView = ({ room }: { room: string }) => {
                     a.click();
                     a.remove();
                   }}
-                  className="bg-blue-600 p-2 text-white rounded-lg hover:bg-blue-700 w-1/2"
+                  className="bg-blue-600 p-2 text-white rounded-lg hover:bg-blue-700"
                 >
                   Download
                 </button>

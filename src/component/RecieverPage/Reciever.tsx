@@ -150,7 +150,7 @@ const Receiver = () => {
           </p>
         </div>
       ) : (
-        <div className="text-2xl font-semibold text-green-700 relative z-10 flex flex-col gap-4 w-full max-w-md bg-white/40 backdrop-blur-lg p-4 rounded-2xl border border-white/60 shadow-2xl">
+        <div className="text-2xl font-semibold text-green-700 relative z-10 flex flex-col gap-4 w-full h-full bg-white/40 backdrop-blur-lg p-4 rounded-2xl border border-white/60 shadow-2xl">
           <FileView room={room} />
         </div>
       )}
