@@ -31,8 +31,6 @@ const DragandDrop = ({
   const socket = useSocket();
   const navigate = useNavigate();
 
-  console.log("Files ma k hudoraxah tah: ", files);
-
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragActive(false);
@@ -63,13 +61,9 @@ const DragandDrop = ({
       toast.error("Please select files to upload.");
       return;
     }
-    console.log("Upload Button clicked...");
     if (peer.dataChannel?.readyState === "open") {
       for (const [i, file] of files.entries()) {
-        console.log("output from upload button: ", file);
-        await peer.sendFile(file.file); // This will push data through the same channel
-        console.log("File Sent!");
-
+        await peer.sendFile(file.file);
         setFile((prev) =>
           prev.map((f, index) => (index === i ? { ...f, done: true } : f))
         );
@@ -113,10 +107,8 @@ const DragandDrop = ({
     if (!socket) return;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleIncommingAnswer = async ({ from, answer }: any) => {
-      console.log("Answer received from: ", from);
+    const handleIncommingAnswer = async ({ answer }: any) => {
       await peer.setRemoteDescription(answer);
-      console.log("Connection almost completed...");
     };
 
     // Ice candidate handler...
@@ -177,8 +169,6 @@ const DragandDrop = ({
       }
 
       const offer = await peer.getOffer();
-      console.log("offer created: ", offer);
-      console.log("receiver ko tah: ", socketId);
       socket.emit("offer", { to: socketId, offer });
     };
     handleConnection();
@@ -187,18 +177,22 @@ const DragandDrop = ({
   useEffect(() => {
     if (peer._peer) {
       peer._peer.onconnectionstatechange = () => {
-        console.log("Connection state:", peer._peer?.connectionState);
         setState(peer._peer?.connectionState || "");
       };
     }
   }, []);
 
   useEffect(() => {
-    if (state === "disconnected") {
+    if (state === "disconnected" || state === "idle") {
       toast.error("Receiver Disconnected...");
+      peer._peer?.close();
+      setTimeout(() => {
+        navigate("/");
+      }, 4000);
     }
     if (state === "failed") {
       toast.error("Disposing the room...");
+      peer._peer?.close();
       setTimeout(() => {
         navigate("/");
       }, 4000);
@@ -206,21 +200,42 @@ const DragandDrop = ({
   }, [state, navigate]);
 
   return (
-    <div className="mx-auto bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="mb-2 flex flex-col gap-2">
+    <div className="h-full flex flex-col justify-between gap-4">
+      <div className="flex flex-col gap-4">
         {state === "disconnected" || state === "failed" ? (
           <h1>
             {username} has disconnected from room {roomCode}
           </h1>
         ) : (
-          <h1>
-            {username} has joined the room {roomCode}
-          </h1>
+          <>
+            {/* Connection Status */}
+            <div className="flex items-center justify-between p-2 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-400/30 rounded-xl backdrop-blur-sm">
+              <div>
+                <p className="text-sm font-medium text-emerald-300">
+                  <span className="inline-block w-2 h-2 bg-emerald-400 rounded-full mr-2"></span>
+                  {state === "connected"
+                    ? "Connected"
+                    : state === "connecting"
+                    ? "Connecting..."
+                    : state === "disconnected"
+                    ? "Disconnected"
+                    : state === "failed"
+                    ? "Connection Failed"
+                    : "Idle"}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  {" "}
+                  • Room : {roomCode}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-mono text-slate-300 bg-slate-700/50 px-3 py-1 rounded">
+                  {socketId.slice(0, 8)}...
+                </p>
+              </div>
+            </div>
+          </>
         )}
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">File Upload</h1>
-        <p className="text-gray-600">
-          Drag and drop your files or click to browse
-        </p>
       </div>
 
       <div
@@ -228,10 +243,10 @@ const DragandDrop = ({
           relative w-full h-64 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-[1.02]
           ${
             isDragActive
-              ? "border-blue-500 bg-blue-100 shadow-lg scale-[1.02]"
-              : files
-              ? "border-green-400 bg-green-50 hover:bg-green-100"
-              : "border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50"
+              ? "border-cyan-400 bg-gradient-to-br from-cyan-500/20 to-blue-500/10 shadow-lg shadow-cyan-500/30 blur-sm"
+              : files.length > 0
+              ? "border-emerald-400/50 bg-gradient-to-br from-emerald-500/10 to-cyan-500/5"
+              : "border-slate-600/50 bg-gradient-to-br from-slate-700/10 to-slate-800/20 hover:border-cyan-400/50 hover:bg-slate-700/30"
           }
           ${uploadStatus === "uploading" ? "animate-pulse" : ""}
         `}
@@ -258,23 +273,27 @@ const DragandDrop = ({
             <>
               <div
                 className={`p-4 rounded-full transition-all duration-300 ${
-                  isDragActive ? "bg-blue-200" : "bg-gray-100"
+                  isDragActive ? "bg-cyan-400/25 scale-110" : "bg-slate-600/30"
                 }`}
               >
                 <Upload
                   className={`w-8 h-8 transition-colors duration-300 ${
-                    isDragActive ? "text-blue-600" : "text-gray-500"
+                    isDragActive ? "text-cyan-300 scale-110" : "text-slate-400"
                   }`}
                 />
               </div>
 
-              {files ? (
-                <p className="text-lg font-medium text-green-700">
-                  File ready to upload
+              <div>
+                <p className="text-xl font-semibold text-white">
+                  {files.length > 0 ? "Ready to upload" : "Drag files here"}
                 </p>
-              ) : (
-                <p className="text-lg font-medium text-gray-700">
-                  {isDragActive ? "Drop file here" : "Choose or drag a file"}
+                <p className="text-sm text-slate-400 mt-2">
+                  or click to browse
+                </p>
+              </div>
+              {files.length === 0 && (
+                <p className="text-xs text-slate-500 mt-2">
+                  Always for speedy P2P file transfer.
                 </p>
               )}
             </>
@@ -288,23 +307,15 @@ const DragandDrop = ({
           ref={inputRef}
           className="hidden"
         />
-
-        {isDragActive && (
-          <div className="absolute inset-0 bg-blue-500 bg-opacity-10 rounded-2xl flex items-center justify-center">
-            <div className="text-blue-600 text-xl font-semibold animate-bounce">
-              Drop files here!
-            </div>
-          </div>
-        )}
       </div>
 
       {files.length > 0 && (
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold text-white/70 flex items-center">
             <File className="w-5 h-5 mr-2" />
             Selected Files
           </h3>
-          <div className="max-h-60 overflow-y-auto space-y-2 p-1">
+          <div className="max-h-60 overflow-y-auto space-y-2 no-scrollbar">
             {files.map((file, index) => (
               <div
                 key={index}
@@ -339,13 +350,12 @@ const DragandDrop = ({
         </div>
       )}
 
-      <div className="flex justify-center items-center">
+      <div className="flex justify-center items-center p-4">
         <button
           onClick={() => {
             handleUploadClick();
-            console.log("Upload button clicked");
           }}
-          className="mt-6 px-6 py-2 text-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+          className="p-2 text-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
         >
           Upload Files
         </button>

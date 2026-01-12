@@ -21,8 +21,6 @@ const Receiver = () => {
   useEffect(() => {
     console.log("QR Checks!");
     const params = new URLSearchParams(window.location.search);
-    console.log("Parameters: ", params);
-
     const qrName = params.get("name");
     const qrCode = params.get("roomCode");
 
@@ -42,7 +40,6 @@ const Receiver = () => {
   }, [socket, room, username, autoJoin]);
 
   useEffect(() => {
-    console.log("Listener checks!");
     const handleInvalidRoom = () => {
       toast.error("Invalid room code");
       setUsername("");
@@ -150,8 +147,8 @@ const Receiver = () => {
           </p>
         </div>
       ) : (
-        <div className="text-2xl font-semibold text-green-700 relative z-10 flex flex-col gap-4 w-full h-full bg-white/40 backdrop-blur-lg p-4 rounded-2xl border border-white/60 shadow-2xl">
-          <FileView room={room} />
+        <div className="relative z-10 w-full max-w-3xl h-full bg-gradient-to-br from-slate-800/40 via-slate-800/20 to-slate-900/40 border border-slate-700/50 rounded-3xl backdrop-blur-2xl shadow-2xl p-4">
+          <FileView room={room} username={username} />
         </div>
       )}
     </div>

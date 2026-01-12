@@ -59,7 +59,6 @@ const Room = ({ roomType }: { roomType: string }) => {
       username: string;
       socketId: string;
     }) => {
-      console.log("Receiver joined:", data);
       navigate("/upload", {
         state: {
           roomCode: id,

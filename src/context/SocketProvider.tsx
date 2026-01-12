@@ -18,7 +18,6 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
       }),
     []
   );
-  console.log("Used socket url: ", socket);
   return (
     <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
   );

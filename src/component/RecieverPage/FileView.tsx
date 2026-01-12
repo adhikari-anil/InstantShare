@@ -15,14 +15,12 @@ interface ReceivedFile {
   totalChunks: number;
 }
 
-const FileView = ({ room }: { room: string }) => {
+const FileView = ({ room, username }: { room: string; username: string }) => {
   const [senderId, setSenderId] = useState("");
   const socket = useSocket();
   const [state, setState] = useState("");
   const [receivedFiles, setReceivedFiles] = useState<ReceivedFile[]>([]);
   const navigate = useNavigate();
-
-  console.log("Received files: ", receivedFiles);
 
   useEffect(() => {
     peer.onDataChannel = (channel) => {
@@ -58,8 +56,6 @@ const FileView = ({ room }: { room: string }) => {
           chunkCount++;
 
           if (fileMeta) {
-            console.log("ChunkCount: ", chunkCount);
-            console.log("File Size: ", fileMeta.size);
             const recievedBytes = buffers.reduce(
               (a, b) => a + (b as ArrayBuffer).byteLength,
               0
@@ -75,7 +71,6 @@ const FileView = ({ room }: { room: string }) => {
                 ...fileMeta,
                 blob: new Blob(buffers, { type: fileMeta.mime }),
               };
-              console.log("Complete file: ", completedFile);
               setReceivedFiles((prev) => [...prev, completedFile]);
               fileMeta = null;
               buffers = [];
@@ -136,20 +131,46 @@ const FileView = ({ room }: { room: string }) => {
   }, []);
 
   useEffect(() => {
-    if (state === "disconnected") toast.error("Sender Disconnect!");
+    if (state === "disconnected") {
+      toast.error("Sender Disconnect!");
+      peer._peer?.close();
+      setTimeout(() => navigate("/"), 4000);
+    }
     if (state === "failed") {
       toast.error("Room closed. Redirecting to homepage!");
+      peer._peer?.close();
       setTimeout(() => navigate("/"), 4000);
     }
   }, [state, navigate]);
 
   return (
     <div className="flex flex-col gap-5">
-      <h1>
-        {state === "connected"
-          ? `Connected to Room: ${room} 🟢`
-          : `Disconnected from Room: ${room} ❌`}
-      </h1>
+      {state === "disconnected" || state === "failed" ? (
+        <h1>
+          {username} has disconnected from room {room}
+        </h1>
+      ) : (
+        <>
+          {/* Connection Status */}
+          <div className="flex items-center justify-between p-2 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-400/30 rounded-xl backdrop-blur-sm">
+            <div>
+              <p className="text-sm font-medium text-emerald-300">
+                <span className="inline-block w-2 h-2 bg-emerald-400 rounded-full mr-2"></span>
+                {state === "connected"
+                  ? "Connected"
+                  : state === "connecting"
+                  ? "Connecting..."
+                  : state === "disconnected"
+                  ? "Disconnected"
+                  : state === "failed"
+                  ? "Connection Failed"
+                  : "Idle"}
+              </p>
+              <p className="text-xs text-slate-400 mt-1"> • Room : {room}</p>
+            </div>
+          </div>
+        </>
+      )}
 
       {receivedFiles.length === 0 && (
         <div className="flex flex-col gap-6 items-center">
@@ -159,7 +180,7 @@ const FileView = ({ room }: { room: string }) => {
       )}
 
       {receivedFiles.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-[600px] overflow-y-auto p-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-[600px] overflow-y-auto p-2 no-scrollbar">
           {receivedFiles.map((file, idx) =>
             file ? (
               <div
